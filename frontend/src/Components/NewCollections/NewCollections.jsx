@@ -6,7 +6,7 @@ const NewCollections = () => {
   const [new_collection, setNew_collection] = useState([]);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_SERVER}/newcollections`)
+    fetch(`${import.meta.env.VITE_SERVER}/newcollections`)
       .then((response) => response.json())
       .then((data) => setNew_collection(data));
   }, []);

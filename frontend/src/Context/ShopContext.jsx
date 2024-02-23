@@ -15,12 +15,13 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState(getDefaultCart);
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_SERVER}/allproducts`)
+    console.log(import.meta.env.VITE_SERVER);
+    fetch(`${import.meta.env.VITE_SERVER}/allproducts`)
       .then((response) => response.json())
       .then((data) => setAll_Product(data));
 
     if (localStorage.getItem("auth-token")) {
-      fetch(`${process.env.REACT_APP_SERVER}/getcart`, {
+      fetch(`${import.meta.env.VITE_SERVER}/getcart`, {
         method: "POST",
         headers: {
           Accept: "application/form-data",
@@ -37,7 +38,7 @@ const ShopContextProvider = (props) => {
   const addToCart = (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] + 1 }));
     if (localStorage.getItem("auth-token")) {
-      fetch(`${process.env.REACT_APP_SERVER}/addtocart`, {
+      fetch(`${import.meta.env.VITE_SERVER}/addtocart`, {
         method: "POST",
         headers: {
           Accept: "application/form-data",
@@ -54,7 +55,7 @@ const ShopContextProvider = (props) => {
   const removeFromCart = (itemId) => {
     setCartItems((prev) => ({ ...prev, [itemId]: prev[itemId] - 1 }));
     if (localStorage.getItem("auth-token")) {
-      fetch(`${process.env.REACT_APP_SERVER}/removefromcart`, {
+      fetch(`${import.meta.env.VITE_SERVER}/removefromcart`, {
         method: "POST",
         headers: {
           Accept: "application/form-data",

@@ -16,7 +16,7 @@ const LoginSignUp = () => {
   const login = async () => {
     console.log("login function executed", formData);
     let responseData;
-    await fetch(`${process.env.REACT_APP_SERVER}/login`, {
+    await fetch(`${import.meta.env.VITE_SERVER}/login`, {
       method: "POST",
       headers: {
         Accept: "application/form-data",
@@ -38,7 +38,7 @@ const LoginSignUp = () => {
   const signup = async () => {
     console.log("signup function executed", formData);
     let responseData;
-    await fetch(`${process.env.REACT_APP_SERVER}/signup`, {
+    await fetch(`${import.meta.env.VITE_SERVER}/signup`, {
       method: "POST",
       headers: {
         Accept: "application/form-data",
