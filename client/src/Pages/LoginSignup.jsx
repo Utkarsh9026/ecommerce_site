@@ -16,7 +16,7 @@ const LoginSignUp = () => {
   const login = async () => {
     console.log("login function executed", formData);
     let responseData;
-    await fetch("http://localhost:4000/login  ", {
+    await fetch(`${process.env.REACT_APP_SERVER}/login`, {
       method: "POST",
       headers: {
         Accept: "application/form-data",
@@ -38,7 +38,7 @@ const LoginSignUp = () => {
   const signup = async () => {
     console.log("signup function executed", formData);
     let responseData;
-    await fetch("http://localhost:4000/signup", {
+    await fetch(`${process.env.REACT_APP_SERVER}/signup`, {
       method: "POST",
       headers: {
         Accept: "application/form-data",
@@ -84,7 +84,7 @@ const LoginSignUp = () => {
             name="password"
             value={formData.password}
             onChange={changeHandler}
-            type="text"
+            type="password"
             placeholder="Password"
           />
         </div>
