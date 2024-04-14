@@ -21,12 +21,13 @@ const AddProduct = () => {
   };
 
   const Add_Product = async () => {
-    console.log(productDetails);
+    // console.log(productDetails);
     let responseData;
     let product = productDetails;
 
     let formData = new FormData();
-    formData.append("product", image);
+    // console.log(image);
+    formData.append("image", image);
     await fetch(`${import.meta.env.VITE_SERVER}/upload`, {
       method: "POST",
       headers: {
@@ -37,12 +38,20 @@ const AddProduct = () => {
       .then((resp) => resp.json())
       .then((data) => {
         responseData = data;
+      })
+      .catch((err) => {
+        console.log(err.message);
+      })
+      .catch((err) => {
+        console.log(err.message);
       });
 
-    if (responseData.success) {
+    // console.log(formData);
+    // console.log(responseData);
+    if (responseData.image_url !== "") {
+      // console.log(responseData);
       product.image = responseData.image_url;
-      console.log(product);
-      await fetch(`${import.meta.VITE_SERVER}/addproduct`, {
+      await fetch(`${import.meta.env.VITE_SERVER}/addproduct`, {
         method: "POST",
         headers: {
           Accept: "application/json",
