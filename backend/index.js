@@ -3,14 +3,23 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const multer = require("multer");
-const path = require("path");
+// const multer = require("multer");
+// const path = require("path");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const cloudinary = require("cloudinary").v2;
+const fileUpload = require("express-fileupload");
 
 dotenv.config();
 app.use(express.json());
 app.use(cors());
+
+//fileupload
+app.use(
+  fileUpload({
+    useTempFiles: true,
+  })
+);
 
 //Database Connection With MongoDB
 mongoose
@@ -22,33 +31,59 @@ mongoose
     console.log(err);
   });
 
+//setting up cloudinary storage
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
+
 //API Creation
 app.get("/", (req, res) => {
   res.send("Express App is Running");
 });
 
-//Image Storage Engine
-const storage = multer.diskStorage({
-  destination: "./upload/images",
-  filename: (req, file, cb) => {
-    return cb(
-      null,
-      `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`
-    );
-  },
-});
+//upload image url route
+app.post("/upload", (req, res) => {
+  const { image } = req.files;
+  if (!image) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
 
-const upload = multer({ storage: storage });
+  // const file = req.files.file;
 
-//Creating Upload Endpoint for images
-app.use("/images", express.static("upload/images"));
-
-app.post("/upload", upload.single("product"), (req, res) => {
-  res.json({
-    success: 1,
-    image_url: `http://localhost:${port}/images/${req.file.filename}`,
+  cloudinary.uploader.upload(image.tempFilePath, (error, result) => {
+    if (error) {
+      console.error("Error uploading file:", error);
+      return res.status(500).json({ message: "Error uploading file" });
+    }
+    // console.log(result);
+    return res.status(200).json({ image_url: result.url });
   });
 });
+
+// //Image Storage Engine
+// const storage = multer.diskStorage({
+//   destination: "./upload/images",
+//   filename: (req, file, cb) => {
+//     return cb(
+//       null,
+//       `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`
+//     );
+//   },
+// });
+
+// const upload = multer({ storage: storage });
+
+// //Creating Upload Endpoint for images
+// app.use("/images", express.static("upload/images"));
+
+// app.post("/upload", upload.single("product"), (req, res) => {
+//   res.json({
+//     success: 1,
+//     image_url: `http://localhost:${port}/images/${req.file.filename}`,
+//   });
+// });
 
 //Schema for Creating Products
 const Product = mongoose.model("Product", {
@@ -87,36 +122,42 @@ const Product = mongoose.model("Product", {
 });
 
 app.post("/addproduct", async (req, res) => {
-  let products = await Product.find({});
-  let id;
-  if (products.length > 0) {
-    let last_product_array = products.slice(-1);
-    let last_product = last_product_array[0];
-    id = last_product.id + 1;
-  } else {
-    id = 1;
+  try {
+    let products = await Product.find({});
+    let id;
+    if (products.length > 0) {
+      let last_product_array = products.slice(-1);
+      let last_product = last_product_array[0];
+      id = last_product.id + 1;
+    } else {
+      id = 1;
+    }
+
+    // console.log(req.body);
+    const product = new Product({
+      id: id,
+      name: req.body.name,
+      image: req.body.image,
+      category: req.body.category,
+      new_price: req.body.new_price,
+      old_price: req.body.old_price,
+    });
+    // console.log(product);
+    await product.save();
+    // console.log("Saved");
+    return res.json({
+      success: true,
+      name: req.body.name,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
-  const product = new Product({
-    id: id,
-    name: req.body.name,
-    image: req.body.image,
-    category: req.body.category,
-    new_price: req.body.new_price,
-    old_price: req.body.old_price,
-  });
-  console.log(product);
-  await product.save();
-  console.log("Saved");
-  res.json({
-    success: true,
-    name: req.body.name,
-  });
 });
 
 //Creating API for deleting Products
 app.post("/removeproduct", async (req, res) => {
   await Product.findOneAndDelete({ id: req.body.id });
-  console.log("Removed");
+  // console.log("Removed");
   res.json({
     success: true,
     name: req.body.name,
@@ -126,7 +167,7 @@ app.post("/removeproduct", async (req, res) => {
 //Creating API for getting all products
 app.get("/allproducts", async (req, res) => {
   let products = await Product.find({});
-  console.log("All Products Fetched");
+  // console.log("All Products Fetched");
   res.send(products);
 });
 
@@ -155,7 +196,7 @@ const Users = mongoose.model("User", {
 app.post("/signup", async (req, res) => {
   let check = await Users.findOne({ email: req.body.email });
   if (check) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       errors: "existing user found with same email address",
     });
@@ -208,7 +249,7 @@ app.post("/login", async (req, res) => {
 app.get("/newcollections", async (req, res) => {
   let products = await Product.find({});
   let newcollection = products.slice(1).slice(-8);
-  console.log("NewCollection Fetched");
+  // console.log("NewCollection Fetched");
   res.send(newcollection);
 });
 
@@ -216,8 +257,8 @@ app.get("/newcollections", async (req, res) => {
 app.get("/popularinwomen", async (req, res) => {
   let products = await Product.find({ category: "women" });
   let popular_in_women = products.slice(0, 4);
-  console.log("Popular in women fetch");
-  console.log(popular_in_women);
+  // console.log("Popular in women fetch");
+  // console.log(popular_in_women);
   res.send(popular_in_women);
 });
 
@@ -243,7 +284,7 @@ const fetchUser = async (req, res, next) => {
 
 //creating endpoint for adding products in a cart data
 app.post("/addtocart", fetchUser, async (req, res) => {
-  console.log("added", req.body.itemId);
+  // console.log("added", req.body.itemId);
   let userData = await Users.findOne({ _id: req.user.id });
   userData.cartData[req.body.itemId] += 1;
   await Users.findOneAndUpdate(
@@ -255,7 +296,7 @@ app.post("/addtocart", fetchUser, async (req, res) => {
 
 //creating endpoint to remove product from cart data
 app.post("/removefromcart", fetchUser, async (req, res) => {
-  console.log("removed", req.body.itemId);
+  // console.log("removed", req.body.itemId);
   let userData = await Users.findOne({ _id: req.user.id });
   if (userData.cartData[req.body.itemId] > 0)
     userData.cartData[req.body.itemId] -= 1;
@@ -268,7 +309,7 @@ app.post("/removefromcart", fetchUser, async (req, res) => {
 
 //creating endpoint to get cartdata
 app.post("/getcart", fetchUser, async (req, res) => {
-  console.log("GetCart");
+  // console.log("GetCart");
   let userData = await Users.findOne({ _id: req.user.id });
   res.json(userData.cartData);
 });

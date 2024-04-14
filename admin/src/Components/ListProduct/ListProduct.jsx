@@ -18,7 +18,8 @@ const ListProduct = () => {
   }, []);
 
   const remove_product = async (id) => {
-    await fetch(`${import.meta.VITE_SERVER}/removeproduct`, {
+    console.log(import.meta.env.VITE_SERVER);
+    await fetch(`${import.meta.env.VITE_SERVER}/removeproduct`, {
       method: "POST",
       headers: {
         Accept: "application/json",
